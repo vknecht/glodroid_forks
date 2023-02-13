@@ -539,46 +539,42 @@ static void set_properties_from_props(struct udev_device *udev_device)
 }
 
 static void set_env_for_glodroid(struct udev_device *udev_device) {
-    bool is_ec25 = false;
+    bool is_qcom = false;
 
-    // Quectel EC25
+    // Qualcomm modem
     const char *devname = udev_device_get_property_value(udev_device, "DEVNAME");
+
     if (devname) {
-        if (strcmp(devname, "/dev/ttyUSB0") == 0) {
+	if (strcmp(devname, "/dev/wwan0at0") == 0) {
             udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
-            udev_list_entry_add(&udev_device->properties, "ID_MM_PORT_TYPE_QCDM", "1", 0);
-            is_ec25 = true;
-        }
-        if (strcmp(devname, "/dev/ttyUSB1") == 0) {
-            udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
-            udev_list_entry_add(&udev_device->properties, "ID_MM_PORT_TYPE_GPS", "1", 0);
-            is_ec25 = true;
-        }
-        if (strcmp(devname, "/dev/ttyUSB2") == 0) {
-            udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
+            udev_list_entry_add(&udev_device->properties, "ID_MM_QCOM_SOC", "1", 0);
+            udev_list_entry_add(&udev_device->properties, "ID_MM_PHYSDEV_UID", "qcom-soc", 0);
             udev_list_entry_add(&udev_device->properties, "ID_MM_PORT_TYPE_AT_PRIMARY", "1", 0);
-            is_ec25 = true;
-        }
-        if (strcmp(devname, "/dev/ttyUSB3") == 0) {
+            is_qcom = true;
+	}
+        if (strcmp(devname, "/dev/wwan0qmi0") == 0) {
             udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
-            udev_list_entry_add(&udev_device->properties, "ID_MM_PORT_TYPE_AT_SECONDARY", "1", 0);
-            is_ec25 = true;
-        }
-        if (strcmp(devname, "/dev/cdc-wdm0") == 0) {
-            udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
-            is_ec25 = true;
-        }
+            udev_list_entry_add(&udev_device->properties, "ID_MM_QCOM_SOC", "1", 0);
+            udev_list_entry_add(&udev_device->properties, "ID_MM_PHYSDEV_UID", "qcom-soc", 0);
+            udev_list_entry_add(&udev_device->properties, "ID_MM_PORT_TYPE_QMI", "1", 0);
+            is_qcom = true;
+	}
     }
 
     const char *subsystem = udev_device_get_property_value(udev_device, "SUBSYSTEM");
     if (subsystem) {
         if (strcmp(subsystem, "net") == 0) {
-            udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
-            is_ec25 = true;
+            const char *devtype = udev_device_get_property_value(udev_device, "DEVTYPE");
+	    if (devtype && strcmp(devtype, "wwan") == 0) {
+                udev_list_entry_add(&udev_device->properties, "ID_MM_CANDIDATE", "1", 0);
+                udev_list_entry_add(&udev_device->properties, "ID_MM_QCOM_SOC", "1", 0);
+                udev_list_entry_add(&udev_device->properties, "ID_MM_PHYSDEV_UID", "qcom-soc", 0);
+                is_qcom = true;
+            }
         }
     }
 
-    if (is_ec25) {
+    if (is_qcom) {
         struct udev_list_entry *entry;
         ALOGV("Device name: %s", udev_device_get_sysname(udev_device));
 
